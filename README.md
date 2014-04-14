@@ -39,7 +39,7 @@ scipy
 
 * Python 3 only.
 
-* Set a [bucket policy to make all objects publically accessible][public-policy]
+* Set a [bucket policy to make all objects publicly accessible][public-policy]
   or Pip won't  be able to download wheels from your wheelhouse.
 
 [public-policy]: http://docs.aws.amazon.com/AmazonS3/latest/dev/AccessPolicyLanguage_UseCases_s3_a.html
