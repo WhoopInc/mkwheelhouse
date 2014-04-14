@@ -13,4 +13,9 @@ setup(
         "yattag >= 0.9.2",
         "wheel >= 0.23.0"
     ],
+    entry_points={
+        'console_scripts': [
+            'mkwheelhouse=mkwheelhouse:main'
+        ],
+    }
 )

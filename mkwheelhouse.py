@@ -100,8 +100,7 @@ def build_wheels(packages, requirements_files):
 
     return temp_dir
 
-
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='Generate and upload wheels to an Amazon S3 wheelhouse')
     parser.add_argument('bucket')
     parser.add_argument('-r', '--requirement', metavar='REQUIREMENTS FILE', action='append')
@@ -121,3 +120,5 @@ if __name__ == '__main__':
 
     print('Index written to:', bucket.resource_url('index.html'))
 
+if __name__ == '__main__':
+    main()

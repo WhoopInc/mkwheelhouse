@@ -13,7 +13,7 @@ Generate wheels for all packages in `requirements_file` or listed
 `package`s and upload them to Amazon S3 `bucket`:
 
 ```bash
-$ python mkwheelhouse.py <bucket> [-r <requirements file>...] [<package>...]
+$ mkwheelhouse <bucket> [-r <requirements file>...] [<package>...]
 ```
 
 Then install with Pip like usual, but preferring generated wheels:
