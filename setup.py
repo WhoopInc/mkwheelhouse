@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='mkwheelhouse',
-    version='0.1.0',
+    version='0.1.1',
     author='Nikhil Benesch',
     author_email='benesch@whoop.com',
     py_modules=['mkwheelhouse'],
