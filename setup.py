@@ -11,7 +11,8 @@ setup(
     install_requires=[
         "awscli >= 1.3.6",
         "yattag >= 0.9.2",
-        "wheel >= 0.23.0"
+        "wheel >= 0.23.0",
+        "pip >= 1.5.4",
     ],
     entry_points={
         'console_scripts': [
