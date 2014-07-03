@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import argparse
 import mimetypes
+import os
 import subprocess
 import tempfile
 
@@ -31,10 +32,7 @@ class Bucket:
         return 's3://{}'.format(self.name)
 
     def resource_url(self, resource):
-        return '{host}{bucket}/{resource}'.format(
-            host=self.endpoint().host,
-            bucket=self.name,
-            resource=resource)
+        return os.path.join(self.endpoint().host, self.name, resource)
 
     def sync(self, local_dir):
         return subprocess.check_call([
