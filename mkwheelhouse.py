@@ -82,17 +82,11 @@ class Bucket:
 
         return doc.getvalue()
 
-def build_wheels(packages, requirements_files):
+def build_wheels(packages):
     packages = packages or []
-    requirements_files = requirements_files or []
-
     temp_dir = tempfile.mkdtemp(prefix='mkwheelhouse-')
 
     args = ['pip', 'wheel', '--wheel-dir', temp_dir]
-
-    for path in requirements_files:
-        args.append('--requirement')
-        args.append(path)
 
     args.extend(packages)
 
@@ -103,18 +97,13 @@ def build_wheels(packages, requirements_files):
 def main():
     parser = argparse.ArgumentParser(description='Generate and upload wheels to an Amazon S3 wheelhouse')
     parser.add_argument('bucket')
-    parser.add_argument('-r', '--requirement', metavar='REQUIREMENTS FILE', action='append')
-    parser.add_argument('package', nargs='*')
+    parser.add_argument('package', nargs='+')
 
     args = parser.parse_args()
 
-    if not args.requirement and not args.package:
-        parser.error('specify at least one requirements file or package')
-
-
     bucket = Bucket(args.bucket)
 
-    build_dir = build_wheels(args.package, args.requirement)
+    build_dir = build_wheels(args.package)
     bucket.sync(build_dir)
     bucket.put(bucket.index(), key='index.html')
 
