@@ -13,31 +13,18 @@ Generate wheels for all packages in `requirements_file` or listed
 `package`s and upload them to Amazon S3 `bucket`:
 
 ```bash
-$ mkwheelhouse <bucket> [-r <requirements file>...] [<package>...]
+$ mkwheelhouse <bucket> [<package>...]
 ```
 
 Then install with Pip like usual, but preferring generated wheels:
 
 ```bash
-$ pip install --find-links <bucket>/index.html -r requirements.txt
-```
-
-### Tips
-
-Specify `--find-links` in your requirements file to skip generating wheels that
-already exist.
-
-```
-# requirements.txt
-
--f https://s3-us-west-2.amazonaws.com/wheelhouse.whoop.com/index.html
-
-scipy
+$ pip install --find-links <bucket>/index.html <package>
 ```
 
 ## Notes
 
-* Python 3 only.
+* Python 2 and 3
 
 * Set a [bucket policy to make all objects publicly accessible][public-policy]
   or Pip won't  be able to download wheels from your wheelhouse.
