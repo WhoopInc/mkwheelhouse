@@ -94,11 +94,11 @@ def build_wheels(packages, index_url):
     ]
     args += packages
     subprocess.check_call(args)
-
     return temp_dir
 
 def main():
-    parser = argparse.ArgumentParser(description='Generate and upload wheels to an Amazon S3 wheelhouse')
+    parser = argparse.ArgumentParser(
+        description='Generate and upload wheels to an Amazon S3 wheelhouse')
     parser.add_argument('bucket')
     parser.add_argument('package', nargs='+')
 
