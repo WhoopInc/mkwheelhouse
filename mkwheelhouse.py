@@ -11,6 +11,7 @@ import tempfile
 import botocore.session
 import yattag
 
+
 class Bucket:
     def __init__(self, name):
         self.name = name
@@ -60,7 +61,8 @@ class Bucket:
 
     def wheels(self):
         op = self.s3_service.get_operation('ListObjects')
-        http_response, response_data = op.call(self.endpoint(), bucket=self.name)
+        http_response, response_data = op.call(self.endpoint(),
+                                               bucket=self.name)
 
         keys = [obj['Key'] for obj in response_data['Contents']]
         keys = [key for key in keys if key.endswith('.whl')]
@@ -82,6 +84,7 @@ class Bucket:
 
         return doc.getvalue()
 
+
 def build_wheels(packages, index_url):
     packages = packages or []
     temp_dir = tempfile.mkdtemp(prefix='mkwheelhouse-')
@@ -93,6 +96,7 @@ def build_wheels(packages, index_url):
     args += packages
     subprocess.check_call(args)
     return temp_dir
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -110,6 +114,7 @@ def main():
     bucket.put(bucket.index(), key='index.html')
 
     print('Index written to:', index_url)
+
 
 if __name__ == '__main__':
     main()
