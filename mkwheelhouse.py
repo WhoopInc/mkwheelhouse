@@ -93,7 +93,7 @@ class Bucket:
         return doc.getvalue()
 
 
-def build_wheels(packages, index_url, download_cache):
+def build_wheels(packages, index_url, cache_dir):
     packages = packages or []
     temp_dir = tempfile.mkdtemp(prefix='mkwheelhouse-')
     args = [
@@ -101,8 +101,8 @@ def build_wheels(packages, index_url, download_cache):
         '--wheel-dir', temp_dir,
         '--find-links', index_url
     ]
-    if download_cache:
-        args += ['--download-cache', download_cache]
+    if cache_dir:
+        args += ['--cache-dir', cache_dir]
     args += packages
     subprocess.check_call(args)
     return temp_dir
@@ -112,7 +112,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Generate and upload wheels to an Amazon S3 wheelhouse')
     parser.add_argument('bucket')
-    parser.add_argument('--download-cache')
+    parser.add_argument('--cache-dir')
     parser.add_argument('package', nargs='+')
 
     args = parser.parse_args()
@@ -120,7 +120,7 @@ def main():
     bucket = Bucket(args.bucket)
     index_url = bucket.resource_url('index.html')
 
-    build_dir = build_wheels(args.package, index_url, args.download_cache)
+    build_dir = build_wheels(args.package, index_url, args.cache_dir)
     bucket.sync(build_dir)
     bucket.put(bucket.index(), key='index.html')
 
