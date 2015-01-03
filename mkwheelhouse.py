@@ -13,8 +13,10 @@ import yattag
 
 
 class Bucket:
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, uri):
+        self.uri = uri.strip('/')
+        split_uri = self.uri.split('/')
+        self.name, self.path = split_uri[0], '/'.join(split_uri[1:])
         self.s3_service = botocore.session.get_session().get_service('s3')
 
     def region(self):
@@ -22,7 +24,7 @@ class Bucket:
             default_endpoint = self.s3_service.get_endpoint()
             op = self.s3_service.get_operation('GetBucketLocation')
             http_response, response_data = op.call(default_endpoint,
-                                                   bucket=self.name)
+                                                   bucket=self.uri)
             self._region = response_data['LocationConstraint']
         return self._region
 
@@ -30,10 +32,10 @@ class Bucket:
         return self.s3_service.get_endpoint(self.region())
 
     def remote_url(self):
-        return 's3://{}'.format(self.name)
+        return 's3://{}'.format(self.uri)
 
     def resource_url(self, resource):
-        return os.path.join(self.endpoint().host, self.name, resource)
+        return os.path.join(self.endpoint().host, self.uri, resource)
 
     def sync(self, local_dir):
         return subprocess.check_call([
@@ -44,7 +46,7 @@ class Bucket:
     def put(self, body, key):
         args = [
             'aws', 's3api', 'put-object',
-            '--bucket', self.name,
+            '--bucket', self.uri,
             '--region', self.region(),
             '--key', key
         ]
@@ -65,12 +67,19 @@ class Bucket:
                                                bucket=self.name)
 
         keys = [obj['Key'] for obj in response_data['Contents']]
-        keys = [key for key in keys if key.endswith('.whl')]
 
         wheels = []
         for key in keys:
-            url = self.resource_url(key)
-            wheels.append((key, url))
+            if not key.endswith('.whl'):
+                continue
+            key_split = key.split('/')
+            if not self.path and len(key_split) > 1:
+                continue
+            elif self.path != '/'.join(key_split[:-1]):
+                continue
+            file = key_split[-1]
+            url = self.resource_url(file)
+            wheels.append((file, url))
 
         return wheels
 
@@ -85,7 +94,7 @@ class Bucket:
         return doc.getvalue()
 
 
-def build_wheels(packages, index_url):
+def build_wheels(packages, index_url, cache_dir):
     packages = packages or []
     temp_dir = tempfile.mkdtemp(prefix='mkwheelhouse-')
     args = [
@@ -93,6 +102,8 @@ def build_wheels(packages, index_url):
         '--wheel-dir', temp_dir,
         '--find-links', index_url
     ]
+    if cache_dir:
+        args += ['--cache-dir', cache_dir]
     args += packages
     subprocess.check_call(args)
     return temp_dir
@@ -102,6 +113,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Generate and upload wheels to an Amazon S3 wheelhouse')
     parser.add_argument('bucket')
+    parser.add_argument('--cache-dir')
     parser.add_argument('package', nargs='+')
 
     args = parser.parse_args()
@@ -109,7 +121,7 @@ def main():
     bucket = Bucket(args.bucket)
     index_url = bucket.resource_url('index.html')
 
-    build_dir = build_wheels(args.package, index_url)
+    build_dir = build_wheels(args.package, index_url, args.cache_dir)
     bucket.sync(build_dir)
     bucket.put(bucket.index(), key='index.html')
 
