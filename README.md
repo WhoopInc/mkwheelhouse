@@ -13,13 +13,13 @@ Generate wheels for all packages in `requirements_file` or listed
 `package`s and upload them to Amazon S3 `bucket`:
 
 ```bash
-$ mkwheelhouse <bucket> [<package>...]
+$ mkwheelhouse BUCKET [PACKAGE...]
 ```
 
 Then install with Pip like usual, but preferring generated wheels:
 
 ```bash
-$ pip install --find-links <bucket>/index.html <package>
+$ pip install --find-links BUCKET/index.html PACKAGE
 ```
 
 ## Notes
