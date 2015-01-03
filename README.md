@@ -9,17 +9,17 @@ down scipy's installation time from 15 minutes to 15 seconds.
 
 ## Usage
 
-Generate wheels for all packages in `requirements_file` or listed
-`package`s and upload them to Amazon S3 `bucket`:
+Generate wheels for all listed `PACKAGE`s and their dependencies, then upload
+them to Amazon S3 `BUCKET`:
 
 ```bash
-$ mkwheelhouse <bucket> [<package>...]
+$ mkwheelhouse BUCKET [PACKAGE...]
 ```
 
 Then install with Pip like usual, but preferring generated wheels:
 
 ```bash
-$ pip install --find-links <bucket>/index.html <package>
+$ pip install --find-links BUCKET/index.html PACKAGE
 ```
 
 ## Notes

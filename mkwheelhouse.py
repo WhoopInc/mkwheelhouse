@@ -65,6 +65,7 @@ class Bucket:
         op = self.s3_service.get_operation('ListObjects')
         http_response, response_data = op.call(self.endpoint(),
                                                bucket=self.name)
+
         keys = [obj['Key'] for obj in response_data['Contents']]
 
         wheels = []
