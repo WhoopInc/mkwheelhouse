@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import argparse
+import glob
 import mimetypes
 import os
 import subprocess
@@ -85,7 +86,7 @@ class Bucket:
         return doc.getvalue()
 
 
-def build_wheels(packages, index_url):
+def build_wheels(packages, index_url, requirements=None):
     packages = packages or []
     temp_dir = tempfile.mkdtemp(prefix='mkwheelhouse-')
     args = [
@@ -93,6 +94,10 @@ def build_wheels(packages, index_url):
         '--wheel-dir', temp_dir,
         '--find-links', index_url
     ]
+
+    for requirement in requirements:
+        args += ['-r', requirement]
+
     args += packages
     subprocess.check_call(args)
     return temp_dir
@@ -101,15 +106,30 @@ def build_wheels(packages, index_url):
 def main():
     parser = argparse.ArgumentParser(
         description='Generate and upload wheels to an Amazon S3 wheelhouse')
+    parser.add_argument('-r', '--requirement', action='append', default=[],
+                        metavar='REQUIREMENTS_FILE',
+                        help='Requirements file to build wheels for')
+    parser.add_argument('-e', '--exclude', action='append', default=[],
+                        metavar='WHEEL_FILENAME',
+                        help='Wheels to exclude from upload')
     parser.add_argument('bucket')
-    parser.add_argument('package', nargs='+')
+    parser.add_argument('package', nargs='*')
 
     args = parser.parse_args()
+
+    if not args.requirement and not args.package:
+        parser.error('specify at least one requirements file or package')
 
     bucket = Bucket(args.bucket)
     index_url = bucket.resource_url('index.html')
 
-    build_dir = build_wheels(args.package, index_url)
+    build_dir = build_wheels(args.package, index_url, args.requirement)
+
+    # Remove exclusions from the build_dir -e/--exclude
+    for exclusion in args.exclude:
+        matches = glob.glob(os.path.join(build_dir, exclusion))
+        map(os.remove, matches)
+
     bucket.sync(build_dir)
     bucket.put(bucket.index(), key='index.html')
 
