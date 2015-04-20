@@ -31,7 +31,7 @@ class Bucket:
         return self.s3_service.get_endpoint(self.region())
 
     def remote_url(self):
-        return 's3://{}'.format(self.name)
+        return 's3://{0:s}'.format(self.name)
 
     def resource_url(self, resource):
         return os.path.join(self.endpoint().host, self.name, resource)
