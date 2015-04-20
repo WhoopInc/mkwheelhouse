@@ -16,7 +16,7 @@ them to Amazon S3 `BUCKET`:
 $ mkwheelhouse BUCKET [PACKAGE...]
 ```
 
-Then install with Pip like usual, but preferring generated wheels:
+Then install with pip like usual, but preferring generated wheels:
 
 ```bash
 $ pip install --find-links BUCKET/index.html PACKAGE
