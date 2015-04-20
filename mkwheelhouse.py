@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import argparse
+import glob
 import mimetypes
 import os
 import subprocess
@@ -85,7 +86,7 @@ class Bucket:
         return doc.getvalue()
 
 
-def build_wheels(packages, index_url):
+def build_wheels(packages, index_url, requirements=None):
     packages = packages or []
     temp_dir = tempfile.mkdtemp(prefix='mkwheelhouse-')
     args = [
@@ -93,6 +94,10 @@ def build_wheels(packages, index_url):
         '--wheel-dir', temp_dir,
         '--find-links', index_url
     ]
+    # Add a requirements.txt file if -r/--requirements specified
+    if requirements is not None:
+        args += ['-r', requirements]
+
     args += packages
     subprocess.check_call(args)
     return temp_dir
@@ -101,6 +106,8 @@ def build_wheels(packages, index_url):
 def main():
     parser = argparse.ArgumentParser(
         description='Generate and upload wheels to an Amazon S3 wheelhouse')
+    parser.add_argument('-r', '--requirements')
+    parser.add_argument('-e', '--exclude', action="append")
     parser.add_argument('bucket')
     parser.add_argument('package', nargs='+')
 
@@ -109,7 +116,13 @@ def main():
     bucket = Bucket(args.bucket)
     index_url = bucket.resource_url('index.html')
 
-    build_dir = build_wheels(args.package, index_url)
+    build_dir = build_wheels(args.package, index_url, args.requirements)
+
+    # Remove exclusions from the build_dir -e/--exclude
+    for exclusion in args.exclude:
+        matches = glob.glob(os.path.join(build_dir, exclusion))
+        map(os.remove, matches)
+
     bucket.sync(build_dir)
     bucket.put(bucket.index(), key='index.html')
 
