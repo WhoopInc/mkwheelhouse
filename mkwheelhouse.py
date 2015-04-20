@@ -24,7 +24,7 @@ class Bucket:
             http_response, response_data = op.call(default_endpoint,
                                                    bucket=self.name)
             self._region = response_data['LocationConstraint']
-        return self._region
+        return self._region or 'us-east-1'
 
     def endpoint(self):
         return self.s3_service.get_endpoint(self.region())
