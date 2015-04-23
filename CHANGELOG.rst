@@ -10,6 +10,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 Changed
 ~~~~~~~
 
+- Boto replaced Botocore. Boto is a higher-level AWS API that provides
+  better error messages. mkwheelhouse's documented functionality should
+  remain unchanged, but if you were relying on error messages, you may
+  be impacted. **[BREAKING]**
 - Documentation converted to reStructuredText.
 
 

@@ -4,6 +4,7 @@ from setuptools import setup
 
 install_requires = [
     'awscli >= 1.3.6',
+    'boto >= 2.38.0',
     'yattag >= 0.9.2',
     'wheel >= 0.23.0',
     'pip >= 1.5.4',

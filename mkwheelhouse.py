@@ -4,91 +4,90 @@ from __future__ import print_function
 
 import argparse
 import glob
+import json
 import mimetypes
 import os
 import subprocess
 import tempfile
 
-import botocore.session
+import boto
+import boto.s3.connection
+import shutil
 import yattag
 
 
 class Bucket:
     def __init__(self, name):
         self.name = name
-        self.s3_service = botocore.session.get_session().get_service('s3')
+        # Boto currently can't handle names with dots unless the region
+        # is specified explicitly.
+        # See: https://github.com/boto/boto/issues/2836
+        self.s3 = boto.s3.connect_to_region(
+            region_name=self.get_region(),
+            calling_format=boto.s3.connection.OrdinaryCallingFormat())
+        self.bucket = self.s3.get_bucket(name)
 
-    def region(self):
+    def get_region(self):
         if not hasattr(self, '_region'):
-            default_endpoint = self.s3_service.get_endpoint()
-            op = self.s3_service.get_operation('GetBucketLocation')
-            http_response, response_data = op.call(default_endpoint,
-                                                   bucket=self.name)
-            self._region = response_data['LocationConstraint']
-        return self._region or 'us-east-1'
+            # S3, for what appears to be backwards-compatibility
+            # reasons, maintains a distinction between location
+            # constraints and region endpoints. Newer regions have
+            # equivalent regions and location constraints, so we
+            # hardcode the non-equivalent regions here with hopefully no
+            # automatic support future S3 regions.
+            #
+            # Note also that someday, Boto should handle this for us
+            # instead of the AWS command line tools.
+            output = subprocess.check_output([
+                'aws', 's3api', 'get-bucket-location',
+                '--bucket', self.name])
+            location = json.loads(output)['LocationConstraint']
+            if not location:
+                self._region = 'us-east-1'
+            elif location == 'EU':
+                self._region = 'eu-west-1'
+            else:
+                self._region = location
+        return self._region
 
-    def endpoint(self):
-        return self.s3_service.get_endpoint(self.region())
+    def generate_url(self, key):
+        if not isinstance(key, boto.s3.key.Key):
+            key = boto.s3.key.Key(bucket=self.bucket, name=key)
 
-    def remote_url(self):
-        return 's3://{0}'.format(self.name)
-
-    def resource_url(self, resource):
-        return os.path.join(self.endpoint().host, self.name, resource)
+        return key.generate_url(expires_in=0, query_auth=False)
 
     def sync(self, local_dir):
         return subprocess.check_call([
             'aws', 's3', 'sync',
-            local_dir, self.remote_url(),
-            '--region', self.region()])
+            local_dir, 's3://{0}'.format(self.bucket.name),
+            '--region', self.get_region()])
 
     def put(self, body, key):
-        args = [
-            'aws', 's3api', 'put-object',
-            '--bucket', self.name,
-            '--region', self.region(),
-            '--key', key
-        ]
+        key = boto.s3.key.Key(bucket=self.bucket, name=key)
 
-        content_type = mimetypes.guess_type(key)[0]
+        content_type = mimetypes.guess_type(key.name)[0]
         if content_type:
-            args += ['--content-type', content_type]
+            key.content_type = content_type
 
-        with tempfile.NamedTemporaryFile() as f:
-            f.write(body.encode('utf-8'))
-            f.flush()
-            args += ['--body', f.name]
-            return subprocess.check_call(args)
+        key.set_contents_from_string(body, replace=True)
 
-    def wheels(self):
-        op = self.s3_service.get_operation('ListObjects')
-        http_response, response_data = op.call(self.endpoint(),
-                                               bucket=self.name)
+    def list_wheels(self):
+        return [key for key in self.bucket.list() if key.name.endswith('.whl')]
 
-        keys = [obj['Key'] for obj in response_data['Contents']]
-        keys = [key for key in keys if key.endswith('.whl')]
-
-        wheels = []
-        for key in keys:
-            url = self.resource_url(key)
-            wheels.append((key, url))
-
-        return wheels
-
-    def index(self):
+    def make_index(self):
         doc, tag, text = yattag.Doc().tagtext()
         with tag('html'):
-            for name, url in self.wheels():
-                with tag('a', href=url):
-                    text(name)
+            for key in self.list_wheels():
+                with tag('a', href=self.generate_url(key)):
+                    text(key.name)
                 doc.stag('br')
 
         return doc.getvalue()
 
 
-def build_wheels(packages, index_url, requirements=None):
-    packages = packages or []
+def build_wheels(packages, index_url, requirements, exclusions):
     temp_dir = tempfile.mkdtemp(prefix='mkwheelhouse-')
+
     args = [
         'pip', 'wheel',
         '--wheel-dir', temp_dir,
@@ -96,10 +95,15 @@ def build_wheels(packages, index_url, requirements=None):
     ]
 
     for requirement in requirements:
-        args += ['-r', requirement]
+        args += ['--requirement', requirement]
 
     args += packages
     subprocess.check_call(args)
+
+    for exclusion in exclusions:
+        matches = glob.glob(os.path.join(temp_dir, exclusion))
+        map(os.remove, matches)
+
     return temp_dir
 
 
@@ -113,7 +117,7 @@ def main():
                         metavar='WHEEL_FILENAME',
                         help='Wheels to exclude from upload')
     parser.add_argument('bucket')
-    parser.add_argument('package', nargs='*')
+    parser.add_argument('package', nargs='*', default=[])
 
     args = parser.parse_args()
 
@@ -121,17 +125,13 @@ def main():
         parser.error('specify at least one requirements file or package')
 
     bucket = Bucket(args.bucket)
-    index_url = bucket.resource_url('index.html')
+    index_url = bucket.generate_url('index.html')
 
-    build_dir = build_wheels(args.package, index_url, args.requirement)
-
-    # Remove exclusions from the build_dir -e/--exclude
-    for exclusion in args.exclude:
-        matches = glob.glob(os.path.join(build_dir, exclusion))
-        map(os.remove, matches)
-
+    build_dir = build_wheels(args.package, index_url, args.requirement,
+                             args.exclude)
     bucket.sync(build_dir)
-    bucket.put(bucket.index(), key='index.html')
+    bucket.put(bucket.make_index(), key='index.html')
+    shutil.rmtree(build_dir)
 
     print('Index written to:', index_url)
 
