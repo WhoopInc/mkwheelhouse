@@ -14,7 +14,7 @@ if sys.version_info < (2, 7):
 
 setup(
     name='mkwheelhouse',
-    version='0.3.0',
+    version='0.3.1',
     author='Nikhil Benesch',
     author_email='benesch@whoop.com',
     py_modules=['mkwheelhouse'],
