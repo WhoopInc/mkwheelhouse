@@ -28,6 +28,7 @@ deploy:
 branches:
   only:
     - master
+    - /^\d+\.\d+\.\d+$/
 env:
   global:
   - MKWHEELHOUSE_BUCKET_STANDARD="travis-$TRAVIS_JOB_NUMBER.mkwheelhouse.com"
