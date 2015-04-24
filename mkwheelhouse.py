@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import argparse
 import glob
@@ -38,10 +39,11 @@ class Bucket:
             #
             # Note also that someday, Boto should handle this for us
             # instead of the AWS command line tools.
-            output = subprocess.check_output([
+            process = subprocess.Popen([
                 'aws', 's3api', 'get-bucket-location',
-                '--bucket', self.name])
-            location = json.loads(output)['LocationConstraint']
+                '--bucket', self.name], stdout=subprocess.PIPE)
+            stdout, _ = process.communicate()
+            location = json.loads(stdout.decode())['LocationConstraint']
             if not location:
                 self._region = 'us-east-1'
             elif location == 'EU':
@@ -102,7 +104,8 @@ def build_wheels(packages, index_url, requirements, exclusions):
 
     for exclusion in exclusions:
         matches = glob.glob(os.path.join(temp_dir, exclusion))
-        map(os.remove, matches)
+        for match in matches:
+            os.remove(match)
 
     return temp_dir
 

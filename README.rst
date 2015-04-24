@@ -1,6 +1,10 @@
 mkwheelhouse
 ============
 
+.. image:: https://travis-ci.org/WhoopInc/mkwheelhouse.svg?branch=1.x
+    :target: https://travis-ci.org/WhoopInc/mkwheelhouse
+    :align: right
+
 Amazon S3 wheelhouse generator.
 
 Wheels are the latest standard in distributing binary for Python. Wheels

@@ -1,0 +1,34 @@
+language: python
+python:
+- 2.6
+- 2.7
+- 3.3
+- 3.4
+before_install:
+- git clone https://github.com/sstephenson/bats.git
+- (cd bats; sudo ./install.sh /usr/local)
+install:
+- python setup.py install
+before_script:
+- test/fixtures.py create
+script:
+- bats test/test.bats
+after_script:
+- test/fixtures.py delete
+deploy:
+  provider: pypi
+  distributions: sdist bdist_wheel
+  user: benesch
+  password:
+    secure: I8eh8vDy6Aojw6QW8hS4/Az6EcFhlTxljeAbTWJZJd8E4+jr4128gXTmVIWdEwlr8bujJKGr4MMdILbUJbOXYpbIK0rYulGuX7r2LvpzFP31GLArfAXtu1o4lgZPasXKNMYxQLNYFoaeLpBgt3hG0XCBwA507ne2yNwp7CL4ypA=
+  on:
+    tags: true
+branches:
+  only:
+    - master
+env:
+  global:
+  - MKWHEELHOUSE_BUCKET_STANDARD="travis-$TRAVIS_JOB_NUMBER.mkwheelhouse.com"
+  - MKWHEELHOUSE_BUCKET_NONSTANDARD="travis-$TRAVIS_JOB_NUMBER.eu.mkwheelhouse.com"
+  - secure: IVLpsOkFZer8m5oO3vZDhyg/lChlO/ZdZbw2LsQkPpxjpx8nzkksJzS33N+Vyk7RD/7RkRNMag2qRAIbauqV2xyMu+mCSHp/MznBnpGBc5DO62Cc4AZrPpzTL5JCBjzxpombaoTfhLRr15wQ7jMAMBBpxsxfNWlKPO9i1icRL5g=
+  - secure: hoS+2oDLCByaeQQ21fM3z+h8Y0Da0tx2+FloEr483Xdv01N8ChzEoRWlvl7e9WF/bI7zMWPRmrpVOKxV095Y0+wlzDXRlGOA+2qr2F5KsiYvH/2yNtO3pFMs4FjKYg0dFXZpvXNhDPion98ish6zFsSAdy2h/HnV8b2hr/8D0Tk=
