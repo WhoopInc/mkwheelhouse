@@ -66,8 +66,7 @@ assert_not_found() {
 
 @test "standard: no package or requirement specified" {
   run mkwheelhouse "$MKWHEELHOUSE_BUCKET_STANDARD"
-  [[ "$status" -eq 2 ]]
-  [[ "$output" == *"specify at least one requirements file or package"* ]]
+  [[ "$output" == *"You must give at least one requirement to wheel"* ]]
 }
 
 @test "standard: pip can't install excluded packages" {
@@ -126,6 +125,13 @@ assert_not_found() {
     jinja2
 }
 
+@test "unrecognized options are passed through to pip" {
+  logfile="$(mktemp -u -t XXXXXmkwheelhouse)"
+  [[ ! -f "$logfile" ]]
+  mkwheelhouse "$MKWHEELHOUSE_BUCKET_STANDARD" --log "$logfile" six
+  [[ -f "$logfile" ]]
+}
+
 @test "nonstandard: packages only" {
   mkwheelhouse "$MKWHEELHOUSE_BUCKET_NONSTANDARD" jinja2
 }
@@ -169,8 +175,7 @@ assert_not_found() {
 
 @test "nonstandard: no package or requirement specified" {
   run mkwheelhouse "$MKWHEELHOUSE_BUCKET_NONSTANDARD"
-  [[ "$status" -eq 2 ]]
-  [[ "$output" == *"specify at least one requirements file or package"* ]]
+  [[ "$output" == *"You must give at least one requirement to wheel"* ]]
 }
 
 @test "nonstandard: pip can't install excluded packages" {

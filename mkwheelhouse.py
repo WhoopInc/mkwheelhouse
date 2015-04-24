@@ -107,7 +107,7 @@ class Bucket(object):
         return doc.getvalue()
 
 
-def build_wheels(packages, index_url, requirements, exclusions):
+def build_wheels(index_url, pip_wheel_args, exclusions):
     temp_dir = tempfile.mkdtemp(prefix='mkwheelhouse-')
 
     args = [
@@ -117,12 +117,8 @@ def build_wheels(packages, index_url, requirements, exclusions):
         # pip < 7 doesn't invalidate HTTP cache based on last-modified
         # header, so disable it.
         '--no-cache-dir'
-    ]
+    ] + pip_wheel_args
 
-    for requirement in requirements:
-        args += ['--requirement', requirement]
-
-    args += packages
     subprocess.check_call(args)
 
     for exclusion in exclusions:
@@ -136,21 +132,14 @@ def build_wheels(packages, index_url, requirements, exclusions):
 def main():
     parser = argparse.ArgumentParser(
         description='Generate and upload wheels to an Amazon S3 wheelhouse')
-    parser.add_argument('-r', '--requirement', action='append', default=[],
-                        metavar='REQUIREMENTS_FILE',
-                        help='Requirements file to build wheels for')
     parser.add_argument('-e', '--exclude', action='append', default=[],
                         metavar='WHEEL_FILENAME',
                         help='Wheels to exclude from upload')
     parser.add_argument('-a', '--acl', metavar='POLICY', default='private',
                         help='Canned ACL policy to apply to uploaded objects')
     parser.add_argument('bucket')
-    parser.add_argument('package', nargs='*', default=[])
 
-    args = parser.parse_args()
-
-    if not args.requirement and not args.package:
-        parser.error('specify at least one requirements file or package')
+    args, pip_wheel_args = parser.parse_known_args()
 
     bucket = Bucket(args.bucket)
 
@@ -159,8 +148,7 @@ def main():
 
     index_url = bucket.generate_url('index.html')
 
-    build_dir = build_wheels(args.package, index_url, args.requirement,
-                             args.exclude)
+    build_dir = build_wheels(index_url, pip_wheel_args, args.exclude)
     bucket.sync(build_dir, acl=args.acl)
     bucket.put(bucket.make_index(), key='index.html', acl=args.acl)
     shutil.rmtree(build_dir)
