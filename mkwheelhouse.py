@@ -17,40 +17,39 @@ import shutil
 import yattag
 
 
-class Bucket:
+class Bucket(object):
     def __init__(self, name):
         self.name = name
         # Boto currently can't handle names with dots unless the region
         # is specified explicitly.
         # See: https://github.com/boto/boto/issues/2836
+        self.region = self._get_region()
         self.s3 = boto.s3.connect_to_region(
-            region_name=self.get_region(),
+            region_name=self.region,
             calling_format=boto.s3.connection.OrdinaryCallingFormat())
         self.bucket = self.s3.get_bucket(name)
 
-    def get_region(self):
-        if not hasattr(self, '_region'):
-            # S3, for what appears to be backwards-compatibility
-            # reasons, maintains a distinction between location
-            # constraints and region endpoints. Newer regions have
-            # equivalent regions and location constraints, so we
-            # hardcode the non-equivalent regions here with hopefully no
-            # automatic support future S3 regions.
-            #
-            # Note also that someday, Boto should handle this for us
-            # instead of the AWS command line tools.
-            process = subprocess.Popen([
-                'aws', 's3api', 'get-bucket-location',
-                '--bucket', self.name], stdout=subprocess.PIPE)
-            stdout, _ = process.communicate()
-            location = json.loads(stdout.decode())['LocationConstraint']
-            if not location:
-                self._region = 'us-east-1'
-            elif location == 'EU':
-                self._region = 'eu-west-1'
-            else:
-                self._region = location
-        return self._region
+    def _get_region(self):
+        # S3, for what appears to be backwards-compatibility
+        # reasons, maintains a distinction between location
+        # constraints and region endpoints. Newer regions have
+        # equivalent regions and location constraints, so we
+        # hardcode the non-equivalent regions here with hopefully no
+        # automatic support future S3 regions.
+        #
+        # Note also that someday, Boto should handle this for us
+        # instead of the AWS command line tools.
+        process = subprocess.Popen([
+            'aws', 's3api', 'get-bucket-location',
+            '--bucket', self.name], stdout=subprocess.PIPE)
+        stdout, _ = process.communicate()
+        location = json.loads(stdout.decode())['LocationConstraint']
+        if not location:
+            return 'us-east-1'
+        elif location == 'EU':
+            return 'eu-west-1'
+        else:
+            return location
 
     def generate_url(self, key):
         if not isinstance(key, boto.s3.key.Key):
@@ -62,7 +61,7 @@ class Bucket:
         return subprocess.check_call([
             'aws', 's3', 'sync',
             local_dir, 's3://{0}'.format(self.bucket.name),
-            '--region', self.get_region()])
+            '--region', self.region])
 
     def put(self, body, key):
         key = boto.s3.key.Key(bucket=self.bucket, name=key)

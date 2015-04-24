@@ -8,10 +8,12 @@ before_install:
 - git clone https://github.com/sstephenson/bats.git
 - (cd bats; sudo ./install.sh /usr/local)
 install:
-- python setup.py install
+-  pip install -e .
+-  pip install "file://`pwd`#egg=mkwheelhouse[tests]"
 before_script:
 - test/fixtures.py create
 script:
+- pre-commit run --all-files
 - bats test/test.bats
 after_script:
 - test/fixtures.py delete
