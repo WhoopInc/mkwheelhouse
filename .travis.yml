@@ -8,8 +8,8 @@ before_install:
 - git clone https://github.com/sstephenson/bats.git
 - (cd bats; sudo ./install.sh /usr/local)
 install:
--  pip install -e .
--  pip install "file://`pwd`#egg=mkwheelhouse[tests]"
+- pip install -e .
+- pip install "file://`pwd`#egg=mkwheelhouse[tests]"
 before_script:
 - test/fixtures.py create
 script:
@@ -22,7 +22,7 @@ deploy:
   distributions: sdist bdist_wheel
   user: benesch
   password:
-    secure: I8eh8vDy6Aojw6QW8hS4/Az6EcFhlTxljeAbTWJZJd8E4+jr4128gXTmVIWdEwlr8bujJKGr4MMdILbUJbOXYpbIK0rYulGuX7r2LvpzFP31GLArfAXtu1o4lgZPasXKNMYxQLNYFoaeLpBgt3hG0XCBwA507ne2yNwp7CL4ypA=
+    secure: gSHjynQppVsUBA+vGFylnMxptLriwlhBNqHGhR/CbCDSa523l+g97mfMEYssvSfmsCfJ07vjF/O7hCU39RxPZB8LIdXAHi2YztM7Jwuc53Bx1jJ20NsfyxXoKY8/wosuDswhB95VjeIRTa754/KbP3X07yd2qipDVbnQJ8UNiIQ=
   on:
     tags: true
 branches:
