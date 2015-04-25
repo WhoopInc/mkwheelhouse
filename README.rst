@@ -1,7 +1,7 @@
 mkwheelhouse
 ============
 
-.. image:: https://travis-ci.org/WhoopInc/mkwheelhouse.svg?branch=1.x
+.. image:: https://travis-ci.org/WhoopInc/mkwheelhouse.svg?branch=master
     :target: https://travis-ci.org/WhoopInc/mkwheelhouse
     :align: right
 
