@@ -16,7 +16,7 @@ if [[ ${#missing_vars[*]} -gt 0 ]]; then
 fi
 
 @test "standard: packages only" {
-  mkwheelhouse "$MKWHEELHOUSE_BUCKET_STANDARD" six
+  mkwheelhouse "$MKWHEELHOUSE_BUCKET_STANDARD" jinja2
 }
 
 @test "standard: -r only" {
@@ -71,11 +71,22 @@ fi
   pip install \
     --no-index \
     --find-links "http://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_STANDARD/index.html" \
-    six pytsdb
+    jinja2 pytsdb
+}
+
+@test "standard: mkwheelhouse builds into prefix" {
+  mkwheelhouse "$MKWHEELHOUSE_BUCKET_STANDARD/deep/rooted/fear" jinja2
+}
+
+@test "standard: pip can install built packages in prefix" {
+  pip install \
+    --no-index \
+    --find-links "http://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_STANDARD/deep/rooted/fear/index.html" \
+    jinja2
 }
 
 @test "nonstandard: packages only" {
-  mkwheelhouse "$MKWHEELHOUSE_BUCKET_NONSTANDARD" six
+  mkwheelhouse "$MKWHEELHOUSE_BUCKET_NONSTANDARD" jinja2
 }
 
 @test "nonstandard: -r only" {
@@ -130,5 +141,16 @@ fi
   pip install \
     --no-index \
     --find-links "http://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_NONSTANDARD/index.html" \
-    six pytsdb
+    jinja2 pytsdb
+}
+
+@test "nonstandard: mkwheelhouse builds into prefix" {
+  mkwheelhouse "$MKWHEELHOUSE_BUCKET_NONSTANDARD/deep/rooted/fear" jinja2
+}
+
+@test "nonstandard: pip can install built packages in prefix" {
+  pip install \
+    --no-index \
+    --find-links "http://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_NONSTANDARD/deep/rooted/fear/index.html" \
+    jinja2
 }

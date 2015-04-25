@@ -8,8 +8,10 @@ import glob
 import json
 import mimetypes
 import os
+import re
 import subprocess
 import tempfile
+from six.moves.urllib.parse import urlparse
 
 import boto
 import boto.s3.connection
@@ -18,8 +20,12 @@ import yattag
 
 
 class Bucket(object):
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, url):
+        if not re.match(r'^(s3:)?//', url):
+            url = '//' + url
+        url = urlparse(url)
+        self.name = url.netloc
+        self.prefix = url.path
         # Boto currently can't handle names with dots unless the region
         # is specified explicitly.
         # See: https://github.com/boto/boto/issues/2836
@@ -27,7 +33,7 @@ class Bucket(object):
         self.s3 = boto.s3.connect_to_region(
             region_name=self.region,
             calling_format=boto.s3.connection.OrdinaryCallingFormat())
-        self.bucket = self.s3.get_bucket(name)
+        self.bucket = self.s3.get_bucket(self.name)
 
     def _get_region(self):
         # S3, for what appears to be backwards-compatibility
@@ -51,20 +57,27 @@ class Bucket(object):
         else:
             return location
 
-    def generate_url(self, key):
+    def get_key(self, key):
         if not isinstance(key, boto.s3.key.Key):
-            key = boto.s3.key.Key(bucket=self.bucket, name=key)
+            return boto.s3.key.Key(bucket=self.bucket,
+                                   name=os.path.join(self.prefix, key))
+        return key
 
+    def generate_url(self, key):
+        key = self.get_key(key)
         return key.generate_url(expires_in=0, query_auth=False)
+
+    def list(self):
+        return self.bucket.list(prefix=self.prefix)
 
     def sync(self, local_dir):
         return subprocess.check_call([
             'aws', 's3', 'sync',
-            local_dir, 's3://{0}'.format(self.bucket.name),
+            local_dir, 's3://{0}/{1}'.format(self.name, self.prefix),
             '--region', self.region])
 
     def put(self, body, key):
-        key = boto.s3.key.Key(bucket=self.bucket, name=key)
+        key = self.get_key(key)
 
         content_type = mimetypes.guess_type(key.name)[0]
         if content_type:
@@ -73,7 +86,7 @@ class Bucket(object):
         key.set_contents_from_string(body, replace=True)
 
     def list_wheels(self):
-        return [key for key in self.bucket.list() if key.name.endswith('.whl')]
+        return [key for key in self.list() if key.name.endswith('.whl')]
 
     def make_index(self):
         doc, tag, text = yattag.Doc().tagtext()

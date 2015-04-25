@@ -4,6 +4,16 @@ Changelog
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+`Unreleased`_ - 2015 April 24
+-----------------------------
+
+Added
+~~~~~
+
+- mkwheelhouse learned to build wheelhouses in S3 subdirectories (key
+  prefixes) `#2`_. Thanks, `@j-martin`_!
+
+
 `1.0.0`_ - 2015 April 23
 ------------------------
 
@@ -30,6 +40,8 @@ Added
 .. _1.0.0: https://github.com/WhoopInc/mkwheelhouse/compare/0.3.1...1.0.0
 .. _0.3.1: https://github.com/WhoopInc/mkwheelhouse/compare/0.3.0...0.3.1
 
+.. _#2: https://github.com/WhoopInc/mkwheelhouse/pull/2
 .. _#6: https://github.com/WhoopInc/mkwheelhouse/pull/6
 
+.. _@j-martin: https://github.com/j-martin
 .. _@prologic: https://github.com/prologic

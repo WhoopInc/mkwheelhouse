@@ -8,6 +8,7 @@ install_requires = [
     'yattag >= 0.9.2',
     'wheel >= 0.23.0',
     'pip >= 1.5.4',
+    'six >= 1.9.0',
 ]
 
 if sys.version_info < (2, 7):

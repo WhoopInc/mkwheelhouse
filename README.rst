@@ -27,6 +27,15 @@ Then install with pip like usual, but preferring generated wheels:
 
     $ pip install --find-links BUCKET/index.html PACKAGE
 
+You can also build a wheelhouse in an `S3 subdirectory`_ by specifying
+the full S3 path:
+
+.. code:: bash
+
+    $ mkwheelhouse s3://BUCKET/SUB/DIRECTORY PACKAGE
+
+.. _S3 subdirectory: http://docs.aws.amazon.com/AmazonS3/latest/UG/FolderOperations.html
+
 Additional options
 ~~~~~~~~~~~~~~~~~~
 
