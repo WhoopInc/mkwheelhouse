@@ -4,7 +4,7 @@ Changelog
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
-`Unreleased`_ - 2015 April 24
+`1.1.0`_ - 2015 April 24
 -----------------------------
 
 Added
@@ -37,6 +37,7 @@ Added
 -  Unofficial Python 2.6 support [`#6`_\ ]. Thanks, `@prologic`_!
 
 
+.. _1.1.0: https://github.com/WhoopInc/mkwheelhouse/compare/1.0.0...1.1.0
 .. _1.0.0: https://github.com/WhoopInc/mkwheelhouse/compare/0.3.1...1.0.0
 .. _0.3.1: https://github.com/WhoopInc/mkwheelhouse/compare/0.3.0...0.3.1
 
