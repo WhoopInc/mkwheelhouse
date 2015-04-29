@@ -21,10 +21,10 @@ deploy:
   provider: pypi
   distributions: sdist bdist_wheel
   user: benesch
-  password:
-    secure: gSHjynQppVsUBA+vGFylnMxptLriwlhBNqHGhR/CbCDSa523l+g97mfMEYssvSfmsCfJ07vjF/O7hCU39RxPZB8LIdXAHi2YztM7Jwuc53Bx1jJ20NsfyxXoKY8/wosuDswhB95VjeIRTa754/KbP3X07yd2qipDVbnQJ8UNiIQ=
   on:
     tags: true
+  password:
+    secure: NIy//LpwQrQ6tGA/+jZCjgewqj4/TwMkjM8IDP7aKKQgDImqGFhzA0otdd5vitJFui2yDetrVubukCVpoTsGZBf0vi+Oy1O77jhJV9noWQKgTjWQiDhJSdPsbbGBfiXBzLW/9ZiTTHKbQiIy6VlPjqSSYEqsj4hk0zSACojwJWM=
 branches:
   only:
     - master
