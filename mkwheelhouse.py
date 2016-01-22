@@ -25,7 +25,7 @@ class Bucket(object):
             url = '//' + url
         url = urlparse(url)
         self.name = url.netloc
-        self.prefix = url.path
+        self.prefix = re.sub('^/', '', url.path)
         # Boto currently can't handle names with dots unless the region
         # is specified explicitly.
         # See: https://github.com/boto/boto/issues/2836
@@ -73,7 +73,7 @@ class Bucket(object):
     def sync(self, local_dir):
         return subprocess.check_call([
             'aws', 's3', 'sync',
-            local_dir, 's3://{0}{1}'.format(self.name, self.prefix),
+            local_dir, 's3://{0}/{1}'.format(self.name, self.prefix),
             '--region', self.region])
 
     def put(self, body, key):
