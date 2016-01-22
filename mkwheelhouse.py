@@ -73,7 +73,7 @@ class Bucket(object):
     def sync(self, local_dir):
         return subprocess.check_call([
             'aws', 's3', 'sync',
-            local_dir, 's3://{0}/{1}'.format(self.name, self.prefix),
+            local_dir, 's3://{0}{1}'.format(self.name, self.prefix),
             '--region', self.region])
 
     def put(self, body, key):
