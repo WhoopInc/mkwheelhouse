@@ -15,6 +15,10 @@ if [[ ${#missing_vars[*]} -gt 0 ]]; then
   exit 1
 fi
 
+setup() {
+  pip uninstall --yes jinja2 pytsdb zini &> /dev/null || true
+}
+
 @test "standard: packages only" {
   mkwheelhouse "$MKWHEELHOUSE_BUCKET_STANDARD" jinja2
 }
@@ -75,14 +79,23 @@ fi
 }
 
 @test "standard: mkwheelhouse builds into prefix" {
-  mkwheelhouse "$MKWHEELHOUSE_BUCKET_STANDARD/deep/rooted/fear" jinja2
+  mkwheelhouse "$MKWHEELHOUSE_BUCKET_STANDARD/deep/rooted/fear" zini
 }
 
 @test "standard: pip can install built packages in prefix" {
   pip install \
     --no-index \
     --find-links "http://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_STANDARD/deep/rooted/fear/index.html" \
+    zini
+}
+
+@test "standard: pip can't install non-prefixed packages from prefix" {
+  run pip install \
+    --no-index \
+    --find-links "http://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_STANDARD/deep/rooted/fear/index.html" \
     jinja2
+  [[ "$status" -eq 1 ]]
+  [[ "$output" == *"No distributions at all found for jinja2"* ]]
 }
 
 @test "nonstandard: packages only" {
@@ -131,7 +144,7 @@ fi
 @test "nonstandard: pip can't install excluded packages" {
   run pip install \
     --no-index \
-    --find-links "http://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_NONSTANDARD/index.html" \
+    --find-links "http://$MKWHEELHOUSE_BUCKET_NONSTANDARD.s3.amazonaws.com/index.html" \
     unittest2
   [[ "$status" -eq 1 ]]
   [[ "$output" == *"No distributions at all found for unittest2"* ]]
@@ -140,17 +153,26 @@ fi
 @test "nonstandard: pip can install built packages" {
   pip install \
     --no-index \
-    --find-links "http://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_NONSTANDARD/index.html" \
+    --find-links "http://$MKWHEELHOUSE_BUCKET_NONSTANDARD.s3.amazonaws.com/index.html" \
     jinja2 pytsdb
 }
 
 @test "nonstandard: mkwheelhouse builds into prefix" {
-  mkwheelhouse "$MKWHEELHOUSE_BUCKET_NONSTANDARD/deep/rooted/fear" jinja2
+  mkwheelhouse "$MKWHEELHOUSE_BUCKET_NONSTANDARD/deep/rooted/fear" zini
 }
 
 @test "nonstandard: pip can install built packages in prefix" {
   pip install \
     --no-index \
-    --find-links "http://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_NONSTANDARD/deep/rooted/fear/index.html" \
+    --find-links "http://$MKWHEELHOUSE_BUCKET_NONSTANDARD.s3.amazonaws.com/deep/rooted/fear/index.html" \
+    zini
+}
+
+@test "nonstandard: pip can't install non-prefixed packages from prefix" {
+  run pip install \
+    --no-index \
+    --find-links "http://$MKWHEELHOUSE_BUCKET_NONSTANDARD.s3.amazonaws.com/deep/rooted/fear/index.html" \
     jinja2
+  [[ "$status" -eq 1 ]]
+  [[ "$output" == *"No distributions at all found for jinja2"* ]]
 }
