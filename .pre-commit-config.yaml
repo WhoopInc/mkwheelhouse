@@ -11,6 +11,6 @@
   - id: trailing-whitespace
 
 - repo: git://github.com/pre-commit/mirrors-pylint
-  sha: '980de436a2b1d7dea34db4d2138a8b9454b620b7'
+  sha: v1.5.2
   hooks:
   - id: pylint

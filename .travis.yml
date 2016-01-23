@@ -13,7 +13,7 @@ install:
 before_script:
 - test/fixtures.py create
 script:
-- pre-commit run --all-files
+- '[[ "$TRAVIS_PYTHON_VERSION" = "2.6" ]] || pre-commit run --all-files'
 - bats test/test.bats
 after_script:
 - test/fixtures.py delete
