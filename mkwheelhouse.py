@@ -25,7 +25,7 @@ class Bucket(object):
             url = '//' + url
         url = urlparse(url)
         self.name = url.netloc
-        self.prefix = url.path
+        self.prefix = url.path.lstrip('/')
         # Boto currently can't handle names with dots unless the region
         # is specified explicitly.
         # See: https://github.com/boto/boto/issues/2836
