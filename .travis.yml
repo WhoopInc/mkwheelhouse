@@ -26,10 +26,6 @@ deploy:
     tags: true
   password:
     secure: NIy//LpwQrQ6tGA/+jZCjgewqj4/TwMkjM8IDP7aKKQgDImqGFhzA0otdd5vitJFui2yDetrVubukCVpoTsGZBf0vi+Oy1O77jhJV9noWQKgTjWQiDhJSdPsbbGBfiXBzLW/9ZiTTHKbQiIy6VlPjqSSYEqsj4hk0zSACojwJWM=
-branches:
-  only:
-    - master
-    - /^\d+\.\d+\.\d+$/
 env:
   global:
   - MKWHEELHOUSE_BUCKET_STANDARD="travis-$TRAVIS_JOB_NUMBER.mkwheelhouse.com"
