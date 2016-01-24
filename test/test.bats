@@ -19,6 +19,10 @@ setup() {
   pip uninstall --yes jinja2 pytsdb zini &> /dev/null || true
 }
 
+assert_not_found() {
+  [[ "$output" == *"No distributions at all found for $1"* || "$output" == *"No matching distribution found for $1"* ]]
+}
+
 @test "standard: packages only" {
   mkwheelhouse "$MKWHEELHOUSE_BUCKET_STANDARD" jinja2
 }
@@ -65,16 +69,16 @@ setup() {
 @test "standard: pip can't install excluded packages" {
   run pip install \
     --no-index \
-    --find-links "http://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_STANDARD/index.html" \
+    --find-links "https://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_STANDARD/index.html" \
     unittest2
   [[ "$status" -eq 1 ]]
-  [[ "$output" == *"No distributions at all found for unittest2"* ]]
+  assert_not_found unittest2
 }
 
 @test "standard: pip can install built packages" {
   pip install \
     --no-index \
-    --find-links "http://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_STANDARD/index.html" \
+    --find-links "https://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_STANDARD/index.html" \
     jinja2 pytsdb
 }
 
@@ -85,17 +89,17 @@ setup() {
 @test "standard: pip can install built packages in prefix" {
   pip install \
     --no-index \
-    --find-links "http://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_STANDARD/deep/rooted/fear/index.html" \
+    --find-links "https://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_STANDARD/deep/rooted/fear/index.html" \
     zini
 }
 
 @test "standard: pip can't install non-prefixed packages from prefix" {
   run pip install \
     --no-index \
-    --find-links "http://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_STANDARD/deep/rooted/fear/index.html" \
+    --find-links "https://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_STANDARD/deep/rooted/fear/index.html" \
     jinja2
   [[ "$status" -eq 1 ]]
-  [[ "$output" == *"No distributions at all found for jinja2"* ]]
+  assert_not_found jinja2
 }
 
 @test "nonstandard: packages only" {
@@ -144,16 +148,16 @@ setup() {
 @test "nonstandard: pip can't install excluded packages" {
   run pip install \
     --no-index \
-    --find-links "http://$MKWHEELHOUSE_BUCKET_NONSTANDARD.s3.amazonaws.com/index.html" \
+    --find-links "https://s3-eu-west-1.amazonaws.com/$MKWHEELHOUSE_BUCKET_NONSTANDARD/index.html" \
     unittest2
   [[ "$status" -eq 1 ]]
-  [[ "$output" == *"No distributions at all found for unittest2"* ]]
+  assert_not_found unittest2
 }
 
 @test "nonstandard: pip can install built packages" {
   pip install \
     --no-index \
-    --find-links "http://$MKWHEELHOUSE_BUCKET_NONSTANDARD.s3.amazonaws.com/index.html" \
+    --find-links "https://s3-eu-west-1.amazonaws.com/$MKWHEELHOUSE_BUCKET_NONSTANDARD/index.html" \
     jinja2 pytsdb
 }
 
@@ -164,15 +168,15 @@ setup() {
 @test "nonstandard: pip can install built packages in prefix" {
   pip install \
     --no-index \
-    --find-links "http://$MKWHEELHOUSE_BUCKET_NONSTANDARD.s3.amazonaws.com/deep/rooted/fear/index.html" \
+    --find-links "https://s3-eu-west-1.amazonaws.com/$MKWHEELHOUSE_BUCKET_NONSTANDARD/deep/rooted/fear/index.html" \
     zini
 }
 
 @test "nonstandard: pip can't install non-prefixed packages from prefix" {
   run pip install \
     --no-index \
-    --find-links "http://$MKWHEELHOUSE_BUCKET_NONSTANDARD.s3.amazonaws.com/deep/rooted/fear/index.html" \
+    --find-links "https://s3-eu-west-1.amazonaws.com/$MKWHEELHOUSE_BUCKET_NONSTANDARD/deep/rooted/fear/index.html" \
     jinja2
   [[ "$status" -eq 1 ]]
-  [[ "$output" == *"No distributions at all found for jinja2"* ]]
+  assert_not_found jinja2
 }
