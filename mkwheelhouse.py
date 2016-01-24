@@ -63,6 +63,9 @@ class Bucket(object):
                                    name=os.path.join(self.prefix, key))
         return key
 
+    def has_key(self, key):
+        return self.get_key(key).exists()
+
     def generate_url(self, key):
         key = self.get_key(key)
         return key.generate_url(expires_in=0, query_auth=False)
@@ -140,6 +143,10 @@ def main():
         parser.error('specify at least one requirements file or package')
 
     bucket = Bucket(args.bucket)
+
+    if not bucket.has_key('index.html'):
+        bucket.put('<!DOCTYPE html><html></html>', 'index.html')
+
     index_url = bucket.generate_url('index.html')
 
     build_dir = build_wheels(args.package, index_url, args.requirement,
