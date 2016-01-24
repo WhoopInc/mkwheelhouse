@@ -9,13 +9,13 @@ import json
 import mimetypes
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 from six.moves.urllib.parse import urlparse
 
 import boto
 import boto.s3.connection
-import shutil
 import yattag
 
 
