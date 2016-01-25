@@ -108,7 +108,10 @@ def build_wheels(packages, index_url, requirements, exclusions):
     args = [
         'pip', 'wheel',
         '--wheel-dir', temp_dir,
-        '--find-links', index_url
+        '--find-links', index_url,
+        # pip < 7 doesn't invalidate HTTP cache based on last-modified
+        # header, so disable it.
+        '--no-cache-dir'
     ]
 
     for requirement in requirements:
