@@ -106,7 +106,8 @@ def build_wheels(packages, index_url, requirements, exclusions):
     temp_dir = tempfile.mkdtemp(prefix='mkwheelhouse-')
 
     args = [
-        'pip', 'wheel',
+        os.environ['VIRTUAL_ENV'] + '/bin/pip',
+        'wheel',
         '--wheel-dir', temp_dir,
         '--find-links', index_url,
         # pip < 7 doesn't invalidate HTTP cache based on last-modified
