@@ -51,7 +51,7 @@ class Bucket(object):
         stdout, _ = process.communicate()
         location = json.loads(stdout.decode())['LocationConstraint']
         if not location:
-            return 'us-east-1'
+            return 'us-west-1'
         elif location == 'EU':
             return 'eu-west-1'
         else:
@@ -68,7 +68,9 @@ class Bucket(object):
 
     def generate_url(self, key):
         key = self.get_key(key)
-        return key.generate_url(expires_in=0, query_auth=False)
+        url = key.generate_url(expires_in=0, query_auth=False)
+        # Temporary hack for fixing the links
+        return url.replace('https', 'http').split('?')[0]
 
     def list(self):
         return self.bucket.list(prefix=self.prefix)
