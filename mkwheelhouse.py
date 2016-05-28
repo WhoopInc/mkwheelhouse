@@ -102,13 +102,13 @@ class Bucket(object):
         return doc.getvalue()
 
 
-def build_wheels(packages, index_url, requirements, exclusions):
+def build_wheels(packages, index_url, requirements, exclusions, cache_dir):
     temp_dir = tempfile.mkdtemp(prefix='mkwheelhouse-')
 
     args = [
         'pip', 'wheel',
         '--wheel-dir', temp_dir,
-        '--find-links', index_url,
+        '--find-links', cache_dir if cache_dir else index_url,
         # pip < 7 doesn't invalidate HTTP cache based on last-modified
         # header, so disable it.
         '--no-cache-dir'
@@ -137,6 +137,11 @@ def main():
     parser.add_argument('-e', '--exclude', action='append', default=[],
                         metavar='WHEEL_FILENAME',
                         help='Wheels to exclude from upload')
+    parser.add_argument('-c', '--cache', action='store', default=None,
+                        metavar='WHEEL_CACHE_DIR',
+                        help='Use a local cache directory when building wheels')
+    parser.add_argument('-s', '--save', action='store_true',
+                        help='Store built wheels in the cache directory')
     parser.add_argument('bucket')
     parser.add_argument('package', nargs='*', default=[])
 
@@ -145,17 +150,34 @@ def main():
     if not args.requirement and not args.package:
         parser.error('specify at least one requirements file or package')
 
+    if args.save and not args.cache:
+        parser.error('must specify cache directory if save flag is used')
+
+    cache_dir = args.cache
+    save_wheels = args.save
     bucket = Bucket(args.bucket)
+    index_url = bucket.generate_url('index.html')
 
     if not bucket.has_key('index.html'):
         bucket.put('<!DOCTYPE html><html></html>', 'index.html')
 
-    index_url = bucket.generate_url('index.html')
+    if cache_dir and not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
 
     build_dir = build_wheels(args.package, index_url, args.requirement,
-                             args.exclude)
+                             args.exclude, cache_dir)
     bucket.sync(build_dir)
     bucket.put(bucket.make_index(), key='index.html')
+
+    if cache_dir and save_wheels:
+        print('Collecting packages to local cache.')
+        for file_name in os.listdir(build_dir):
+            src_name = os.path.join(build_dir, file_name)
+            dst_name = os.path.join(cache_dir, file_name)
+            if os.path.isfile(src_name) and not os.path.isfile(dst_name):
+                print('Copying {}'.format(file_name))
+                shutil.copy(src_name, cache_dir)
+
     shutil.rmtree(build_dir)
 
     print('Index written to:', index_url)
