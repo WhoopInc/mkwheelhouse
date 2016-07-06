@@ -73,9 +73,10 @@ class Bucket(object):
     def list(self):
         return self.bucket.list(prefix=self.prefix)
 
-    def sync(self, local_dir):
+    def sync(self, local_dir, acl):
         return subprocess.check_call([
             'aws', 's3', 'sync',
+            '--acl', acl
             local_dir, 's3://{0}/{1}'.format(self.name, self.prefix),
             '--region', self.region])
 
@@ -137,6 +138,9 @@ def main():
     parser.add_argument('-e', '--exclude', action='append', default=[],
                         metavar='WHEEL_FILENAME',
                         help='Wheels to exclude from upload')
+    parser.add_argument('-a', '--acl', action='store', default='private',
+                        metavar='ACL',
+                        help='s3 ACL to apply on sync')
     parser.add_argument('bucket')
     parser.add_argument('package', nargs='*', default=[])
 
@@ -154,7 +158,7 @@ def main():
 
     build_dir = build_wheels(args.package, index_url, args.requirement,
                              args.exclude)
-    bucket.sync(build_dir)
+    bucket.sync(build_dir,args.acl)
     bucket.put(bucket.make_index(), key='index.html')
     shutil.rmtree(build_dir)
 
