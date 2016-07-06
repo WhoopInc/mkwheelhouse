@@ -80,14 +80,14 @@ class Bucket(object):
             local_dir, 's3://{0}/{1}'.format(self.name, self.prefix),
             '--region', self.region])
 
-    def put(self, body, key):
+    def put(self, body, key, acl):
         key = self.get_key(key)
 
         content_type = mimetypes.guess_type(key.name)[0]
         if content_type:
             key.content_type = content_type
 
-        key.set_contents_from_string(body, replace=True, policy="public-read")
+        key.set_contents_from_string(body, replace=True, policy=acl)
 
     def list_wheels(self):
         return [key for key in self.list() if key.name.endswith('.whl')]
@@ -152,14 +152,14 @@ def main():
     bucket = Bucket(args.bucket)
 
     if not bucket.has_key('index.html'):
-        bucket.put('<!DOCTYPE html><html></html>', 'index.html')
+        bucket.put('<!DOCTYPE html><html></html>', 'index.html', args.acl)
 
     index_url = bucket.generate_url('index.html')
 
     build_dir = build_wheels(args.package, index_url, args.requirement,
                              args.exclude)
     bucket.sync(build_dir,args.acl)
-    bucket.put(bucket.make_index(), key='index.html')
+    bucket.put(bucket.make_index(), 'index.html', args.acl)
     shutil.rmtree(build_dir)
 
     print('Index written to:', index_url)
