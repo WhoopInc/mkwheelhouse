@@ -160,6 +160,7 @@ def main():
                              args.exclude)
     bucket.sync(build_dir,args.acl)
     bucket.put(bucket.make_index(), key='index.html')
+    bucket.set_acl(args.acl, 'index.html')
     shutil.rmtree(build_dir)
 
     print('Index written to:', index_url)
