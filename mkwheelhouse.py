@@ -103,7 +103,7 @@ class Bucket(object):
         return doc.getvalue()
 
 
-def build_wheels(packages, index_url, requirements, exclusions):
+def build_wheels(packages, index_url, requirements, exclusions, sources):
     temp_dir = tempfile.mkdtemp(prefix='mkwheelhouse-')
 
     args = [
@@ -117,6 +117,9 @@ def build_wheels(packages, index_url, requirements, exclusions):
 
     for requirement in requirements:
         args += ['--requirement', requirement]
+
+    for source in sources:
+        args += ['--no-binary', source]
 
     args += packages
     subprocess.check_call(args)
@@ -141,6 +144,9 @@ def main():
     parser.add_argument('-a', '--acl', action='store', default='private',
                         metavar='ACL',
                         help='s3 ACL to apply on sync')
+    parser.add_argument('-s', '--source', action='append', default=[],
+                        metavar='NONBINARY',
+                        help='prevent pip from using community pre-compiled wheels, use :all: for all')
     parser.add_argument('bucket')
     parser.add_argument('package', nargs='*', default=[])
 
@@ -158,7 +164,7 @@ def main():
     print('Using: ', index_url)
 
     build_dir = build_wheels(args.package, index_url, args.requirement,
-                             args.exclude)
+                             args.exclude, args.source)
     bucket.sync(build_dir,args.acl)
     bucket.put(bucket.make_index(), 'index.html', args.acl)
     shutil.rmtree(build_dir)
