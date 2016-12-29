@@ -33,6 +33,11 @@ class Bucket(object):
         self.s3 = boto.s3.connect_to_region(
             region_name=self.region,
             calling_format=boto.s3.connection.OrdinaryCallingFormat())
+        # Hack to work around Boto bug that generates invalid URLs when
+        # query_auth=False and an IAM role is in use.
+        # See: https://github.com/boto/boto/issues/2043
+        # See: https://github.com/WhoopInc/mkwheelhouse/issues/11
+        self.s3.provider.security_token = ''
         self.bucket = self.s3.get_bucket(self.name)
 
     def _get_region(self):
