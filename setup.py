@@ -11,7 +11,7 @@ install_requires = [
 
 setup(
     name='mkwheelhouse',
-    version='1.1.1',
+    version='2.0.0',
     author='Nikhil Benesch',
     author_email='benesch@whoop.com',
     py_modules=['mkwheelhouse'],

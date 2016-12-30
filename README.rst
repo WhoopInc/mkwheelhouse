@@ -19,7 +19,7 @@ then upload them to Amazon S3 ``BUCKET``:
 
 .. code:: bash
 
-    $ mkwheelhouse [options] BUCKET [PACKAGE...]
+    $ mkwheelhouse [options] BUCKET [PACKAGE...] [pip-options]
 
 Then install with pip like usual, but preferring generated wheels:
 
@@ -43,12 +43,6 @@ Additional options
 
   Print usage information and exit.
 
-- ``-r``, ``--requirement REQUIREMENTS_FILE``
-
-  Also include packages (and their dependencies) from the pip requirements
-  file REQUIREMENTS\_FILE. Can be specified multiple times and combined
-  with positional PACKAGE arguments.
-
 - ``-e``, ``--exclude WHEEL_FILENAME``
 
   Don't upload built wheel with filename WHEEL\_FILENAME. Note this is the
@@ -67,6 +61,21 @@ Additional options
   `AWS documentation`_.
 
 .. _AWS documentation: http://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
+
+Any unrecognized options are passed directly to ``pip wheel``. That
+means mkwheelhouse supports requirements files, for example:
+
+.. code:: bash
+
+    $ mkwheelhouse s3://BUCKET -r requirements.txt
+
+Need an install log? Need to compile from source? You got it.
+
+.. code:: bash
+
+    $ mkwheelhouse s3://BUCKET --log log.txt --no-binary :all: numpy
+
+Consult ``pip wheel`` for a complete list of pip-options.
 
 Notes
 -----
