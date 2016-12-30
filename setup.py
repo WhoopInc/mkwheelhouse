@@ -37,7 +37,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'mkwheelhouse=mkwheelhouse:main'
+            'mkwheelhouse=mkwheelhouse:parse_args'
         ],
     }
 )

@@ -11,12 +11,20 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from six.moves.urllib.parse import urlparse
 
 import boto
 import boto.s3.connection
 import yattag
+
+
+def spawn(args, capture_output=False):
+    print('=>', ' '.join(args))
+    if capture_output:
+        return subprocess.check_output(args)
+    return subprocess.check_call(args)
 
 
 class Bucket(object):
@@ -50,10 +58,9 @@ class Bucket(object):
         #
         # Note also that someday, Boto should handle this for us
         # instead of the AWS command line tools.
-        process = subprocess.Popen([
+        stdout = spawn([
             'aws', 's3api', 'get-bucket-location',
-            '--bucket', self.name], stdout=subprocess.PIPE)
-        stdout, _ = process.communicate()
+            '--bucket', self.name], capture_output=True)
         location = json.loads(stdout.decode())['LocationConstraint']
         if not location:
             return 'us-east-1'
@@ -79,7 +86,7 @@ class Bucket(object):
         return self.bucket.list(prefix=self.prefix)
 
     def sync(self, local_dir, acl):
-        return subprocess.check_call([
+        return spawn([
             'aws', 's3', 'sync',
             local_dir, 's3://{0}/{1}'.format(self.name, self.prefix),
             '--region', self.region, '--acl', acl])
@@ -119,7 +126,7 @@ def build_wheels(index_url, pip_wheel_args, exclusions):
         '--no-cache-dir'
     ] + pip_wheel_args
 
-    subprocess.check_call(args)
+    spawn(args)
 
     for exclusion in exclusions:
         matches = glob.glob(os.path.join(temp_dir, exclusion))
@@ -129,7 +136,7 @@ def build_wheels(index_url, pip_wheel_args, exclusions):
     return temp_dir
 
 
-def main():
+def parse_args():
     parser = argparse.ArgumentParser(
         description='Generate and upload wheels to an Amazon S3 wheelhouse')
     parser.add_argument('-e', '--exclude', action='append', default=[],
@@ -140,7 +147,14 @@ def main():
     parser.add_argument('bucket')
 
     args, pip_wheel_args = parser.parse_known_args()
+    try:
+        run(args, pip_wheel_args)
+    except subprocess.CalledProcessError:
+        print('mkwheelhouse: detected error in subprocess, aborting!',
+              file=sys.stderr)
 
+
+def run(args, pip_wheel_args):
     bucket = Bucket(args.bucket)
 
     if not bucket.has_key('index.html'):
@@ -153,8 +167,8 @@ def main():
     bucket.put(bucket.make_index(), key='index.html', acl=args.acl)
     shutil.rmtree(build_dir)
 
-    print('Index written to:', index_url)
+    print('mkwheelhouse: index written to', index_url)
 
 
 if __name__ == '__main__':
-    main()
+    parse_args()
