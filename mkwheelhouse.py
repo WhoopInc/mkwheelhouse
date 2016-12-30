@@ -73,25 +73,26 @@ class Bucket(object):
 
     def generate_url(self, key):
         key = self.get_key(key)
-        return key.generate_url(expires_in=0, query_auth=False)
+        return key.generate_url(expires_in=0, query_auth=False).split('?')[0]
 
     def list(self):
         return self.bucket.list(prefix=self.prefix)
 
-    def sync(self, local_dir):
+    def sync(self, local_dir, acl):
         return subprocess.check_call([
             'aws', 's3', 'sync',
+            '--acl', acl,
             local_dir, 's3://{0}/{1}'.format(self.name, self.prefix),
             '--region', self.region])
 
-    def put(self, body, key):
+    def put(self, body, key, acl):
         key = self.get_key(key)
 
         content_type = mimetypes.guess_type(key.name)[0]
         if content_type:
             key.content_type = content_type
 
-        key.set_contents_from_string(body, replace=True)
+        key.set_contents_from_string(body, replace=True, policy=acl)
 
     def list_wheels(self):
         return [key for key in self.list() if key.name.endswith('.whl')]
@@ -107,7 +108,7 @@ class Bucket(object):
         return doc.getvalue()
 
 
-def build_wheels(packages, index_url, requirements, exclusions):
+def build_wheels(packages, index_url, requirements, exclusions, sources):
     temp_dir = tempfile.mkdtemp(prefix='mkwheelhouse-')
 
     args = [
@@ -121,6 +122,9 @@ def build_wheels(packages, index_url, requirements, exclusions):
 
     for requirement in requirements:
         args += ['--requirement', requirement]
+
+    for source in sources:
+        args += ['--no-binary', source]
 
     args += packages
     subprocess.check_call(args)
@@ -142,6 +146,12 @@ def main():
     parser.add_argument('-e', '--exclude', action='append', default=[],
                         metavar='WHEEL_FILENAME',
                         help='Wheels to exclude from upload')
+    parser.add_argument('-a', '--acl', action='store', default='private',
+                        metavar='ACL',
+                        help='s3 ACL to apply on sync')
+    parser.add_argument('-s', '--source', action='append', default=[],
+                        metavar='NONBINARY',
+                        help='prevent pip from using community pre-compiled wheels, use :all: for all')
     parser.add_argument('bucket')
     parser.add_argument('package', nargs='*', default=[])
 
@@ -153,14 +163,15 @@ def main():
     bucket = Bucket(args.bucket)
 
     if not bucket.has_key('index.html'):
-        bucket.put('<!DOCTYPE html><html></html>', 'index.html')
+        bucket.put('<!DOCTYPE html><html></html>', 'index.html', args.acl)
 
     index_url = bucket.generate_url('index.html')
+    print('Using: ', index_url)
 
     build_dir = build_wheels(args.package, index_url, args.requirement,
-                             args.exclude)
-    bucket.sync(build_dir)
-    bucket.put(bucket.make_index(), key='index.html')
+                             args.exclude, args.source)
+    bucket.sync(build_dir,args.acl)
+    bucket.put(bucket.make_index(), 'index.html', args.acl)
     shutil.rmtree(build_dir)
 
     print('Index written to:', index_url)
