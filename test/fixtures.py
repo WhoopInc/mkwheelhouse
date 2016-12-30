@@ -32,17 +32,25 @@ connections = [
     (os.environ['MKWHEELHOUSE_BUCKET_STANDARD'], 'us-east-1', Location.DEFAULT)
 ]
 
+
+def purge_bucket(name):
+    bucket = s3.get_bucket(name)
+    bucket.delete_keys([key.name for key in bucket.list()])
+    bucket.delete()
+
+
 for bucket_name, region, location in connections:
+    bucket_name_private = bucket_name + '-private'
     s3 = boto.s3.connect_to_region(region,
                                    calling_format=OrdinaryCallingFormat())
     if sys.argv[1] == 'create':
-        bucket = s3.create_bucket(bucket_name, location=location)
-        bucket.set_policy(BUCKET_POLICY_PUBLIC % bucket_name)
+        b = s3.create_bucket(bucket_name, location=location)
+        b.set_policy(BUCKET_POLICY_PUBLIC % bucket_name)
+        s3.create_bucket(bucket_name_private, location=location)
     else:
         try:
-            bucket = s3.get_bucket(bucket_name)
-            bucket.delete_keys([key.name for key in bucket.list()])
-            bucket.delete()
+            purge_bucket(bucket_name)
+            purge_bucket(bucket_name_private)
         except boto.exception.S3ResponseError:
             traceback.print_exc()
             # Don't exit just yet. We may still be able to clean up the

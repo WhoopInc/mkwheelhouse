@@ -78,20 +78,20 @@ class Bucket(object):
     def list(self):
         return self.bucket.list(prefix=self.prefix)
 
-    def sync(self, local_dir):
+    def sync(self, local_dir, acl):
         return subprocess.check_call([
             'aws', 's3', 'sync',
             local_dir, 's3://{0}/{1}'.format(self.name, self.prefix),
-            '--region', self.region])
+            '--region', self.region, '--acl', acl])
 
-    def put(self, body, key):
+    def put(self, body, key, acl):
         key = self.get_key(key)
 
         content_type = mimetypes.guess_type(key.name)[0]
         if content_type:
             key.content_type = content_type
 
-        key.set_contents_from_string(body, replace=True)
+        key.set_contents_from_string(body, replace=True, policy=acl)
 
     def list_wheels(self):
         return [key for key in self.list() if key.name.endswith('.whl')]
@@ -142,6 +142,8 @@ def main():
     parser.add_argument('-e', '--exclude', action='append', default=[],
                         metavar='WHEEL_FILENAME',
                         help='Wheels to exclude from upload')
+    parser.add_argument('-a', '--acl', metavar='POLICY', default='private',
+                        help='Canned ACL policy to apply to uploaded objects')
     parser.add_argument('bucket')
     parser.add_argument('package', nargs='*', default=[])
 
@@ -153,14 +155,14 @@ def main():
     bucket = Bucket(args.bucket)
 
     if not bucket.has_key('index.html'):
-        bucket.put('<!DOCTYPE html><html></html>', 'index.html')
+        bucket.put('<!DOCTYPE html><html></html>', 'index.html', acl=args.acl)
 
     index_url = bucket.generate_url('index.html')
 
     build_dir = build_wheels(args.package, index_url, args.requirement,
                              args.exclude)
-    bucket.sync(build_dir)
-    bucket.put(bucket.make_index(), key='index.html')
+    bucket.sync(build_dir, acl=args.acl)
+    bucket.put(bucket.make_index(), key='index.html', acl=args.acl)
     shutil.rmtree(build_dir)
 
     print('Index written to:', index_url)

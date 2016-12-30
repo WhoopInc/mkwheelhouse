@@ -19,7 +19,7 @@ then upload them to Amazon S3 ``BUCKET``:
 
 .. code:: bash
 
-    $ mkwheelhouse BUCKET [PACKAGE...]
+    $ mkwheelhouse [options] BUCKET [PACKAGE...]
 
 Then install with pip like usual, but preferring generated wheels:
 
@@ -49,7 +49,7 @@ Additional options
   file REQUIREMENTS\_FILE. Can be specified multiple times and combined
   with positional PACKAGE arguments.
 
-- ``-e``, ``--exclude WHEEL_FILENAME``:
+- ``-e``, ``--exclude WHEEL_FILENAME``
 
   Don't upload built wheel with filename WHEEL\_FILENAME. Note this is the
   final wheel filename, like ``argparse-1.3.0-py2.py3-none-any.whl``,
@@ -57,6 +57,16 @@ Additional options
 
   Specifying an exclusion will not remove pre-existing built wheels from
   S3; you'll have to remove those wheels from the bucket manually.
+
+- ``-a``, ``--acl POLICY``
+
+  Apply canned ACL policy POLICY to the uploaded wheels and index.
+  Specifying ``public-read``, for example, will make the uploaded wheels
+  and index publicly accessible, avoiding the need for for a bucket
+  policy to do the same. Valid values for POLICY can be found in the
+  `AWS documentation`_.
+
+.. _AWS documentation: http://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
 
 Notes
 -----

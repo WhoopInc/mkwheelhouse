@@ -54,6 +54,10 @@ assert_not_found() {
     --exclude unittest2-1.0.1-py2.py3-none-any.whl
 }
 
+@test "standard: install with acl private (default)" {
+  mkwheelhouse "$MKWHEELHOUSE_BUCKET_STANDARD-private" jinja2
+}
+
 @test "standard: no bucket specified" {
   run mkwheelhouse
   [[ "$status" -eq 2 ]]
@@ -102,6 +106,26 @@ assert_not_found() {
   assert_not_found jinja2
 }
 
+@test "standard: pip can't install packages from acl private" {
+  run pip install \
+    --no-index \
+    --find-links "https://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_STANDARD-private/index.html" \
+    jinja2
+  [[ "$status" -eq 1 ]]
+  assert_not_found jinja2
+}
+
+@test "standard: install with acl public-read" {
+  mkwheelhouse --acl public-read "$MKWHEELHOUSE_BUCKET_STANDARD-private" jinja2
+}
+
+@test "standard: pip can install packages from acl public-read" {
+  pip install \
+    --no-index \
+    --find-links "https://s3.amazonaws.com/$MKWHEELHOUSE_BUCKET_STANDARD-private/index.html" \
+    jinja2
+}
+
 @test "nonstandard: packages only" {
   mkwheelhouse "$MKWHEELHOUSE_BUCKET_NONSTANDARD" jinja2
 }
@@ -131,6 +155,10 @@ assert_not_found() {
   mkwheelhouse "$MKWHEELHOUSE_BUCKET_NONSTANDARD" \
     --requirement "$BATS_TEST_DIRNAME/requirements/exclusions.txt" \
     --exclude unittest2-1.0.1-py2.py3-none-any.whl
+}
+
+@test "nonstandard: install with acl private (default)" {
+  mkwheelhouse "$MKWHEELHOUSE_BUCKET_NONSTANDARD-private" jinja2
 }
 
 @test "nonstandard: no bucket specified" {
@@ -179,4 +207,24 @@ assert_not_found() {
     jinja2
   [[ "$status" -eq 1 ]]
   assert_not_found jinja2
+}
+
+@test "nonstandard: pip can't install packages from acl private" {
+  run pip install \
+    --no-index \
+    --find-links "https://s3-eu-west-1.amazonaws.com/$MKWHEELHOUSE_BUCKET_NONSTANDARD-private/index.html" \
+    jinja2
+  [[ "$status" -eq 1 ]]
+  assert_not_found jinja2
+}
+
+@test "nonstandard: install with acl public-read" {
+  mkwheelhouse --acl public-read "$MKWHEELHOUSE_BUCKET_NONSTANDARD-private" jinja2
+}
+
+@test "nonstandard: pip can install packages from acl public-read" {
+  pip install \
+    --no-index \
+    --find-links "https://s3-eu-west-1.amazonaws.com/$MKWHEELHOUSE_BUCKET_NONSTANDARD-private/index.html" \
+    jinja2
 }
