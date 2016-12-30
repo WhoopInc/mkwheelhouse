@@ -1,5 +1,3 @@
-import sys
-
 from setuptools import setup
 
 install_requires = [
@@ -10,9 +8,6 @@ install_requires = [
     'pip >= 1.5.4',
     'six >= 1.9.0',
 ]
-
-if sys.version_info < (2, 7):
-    install_requires += ['argparse >= 1.3.0']
 
 setup(
     name='mkwheelhouse',
