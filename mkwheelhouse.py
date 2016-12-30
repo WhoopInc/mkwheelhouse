@@ -134,13 +134,16 @@ def build_wheels(index_url, pip_wheel_args, exclusions):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Generate and upload wheels to an Amazon S3 wheelhouse')
+        description='Generate and upload wheels to an Amazon S3 wheelhouse',
+        usage='mkwheelhouse [options] bucket [PACKAGE...] [pip-options]',
+        epilog='Consult `pip wheel` for valid pip-options.')
     parser.add_argument('-e', '--exclude', action='append', default=[],
                         metavar='WHEEL_FILENAME',
-                        help='Wheels to exclude from upload')
+                        help='wheels to exclude from upload')
     parser.add_argument('-a', '--acl', metavar='POLICY', default='private',
-                        help='Canned ACL policy to apply to uploaded objects')
-    parser.add_argument('bucket')
+                        help='canned ACL policy to apply to uploaded objects')
+    parser.add_argument('bucket',
+                        help='the Amazon S3 bucket to upload wheels to')
     args, pip_wheel_args = parser.parse_known_args()
     try:
         run(args, pip_wheel_args)
