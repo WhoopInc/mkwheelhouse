@@ -1,5 +1,5 @@
 - repo: git://github.com/pre-commit/pre-commit-hooks
-  sha: cedcea550c495d536247ca23115035b17074cac7
+  sha: v0.6.1
   hooks:
   - id: check-case-conflict
   - id: check-merge-conflict
@@ -11,6 +11,6 @@
   - id: trailing-whitespace
 
 - repo: git://github.com/pre-commit/mirrors-pylint
-  sha: v1.5.2
+  sha: v1.6.4
   hooks:
   - id: pylint
