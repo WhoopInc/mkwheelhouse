@@ -115,10 +115,10 @@ class Bucket(object):
 
 
 def build_wheels(index_url, pip_wheel_args, exclusions):
-    temp_dir = tempfile.mkdtemp(prefix='mkwheelhouse-')
+    build_dir = tempfile.mkdtemp(prefix='mkwheelhouse-')
     args = [
         'pip', 'wheel',
-        '--wheel-dir', temp_dir,
+        '--wheel-dir', build_dir,
         '--find-links', index_url,
         # pip < 7 doesn't invalidate HTTP cache based on last-modified
         # header, so disable it.
@@ -126,10 +126,10 @@ def build_wheels(index_url, pip_wheel_args, exclusions):
     ] + pip_wheel_args
     spawn(args)
     for exclusion in exclusions:
-        matches = glob.glob(os.path.join(temp_dir, exclusion))
+        matches = glob.glob(os.path.join(build_dir, exclusion))
         for match in matches:
             os.remove(match)
-    return temp_dir
+    return build_dir
 
 
 def parse_args():
