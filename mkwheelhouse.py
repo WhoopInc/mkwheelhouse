@@ -116,7 +116,6 @@ class Bucket(object):
 
 def build_wheels(index_url, pip_wheel_args, exclusions):
     temp_dir = tempfile.mkdtemp(prefix='mkwheelhouse-')
-
     args = [
         'pip', 'wheel',
         '--wheel-dir', temp_dir,
@@ -125,14 +124,11 @@ def build_wheels(index_url, pip_wheel_args, exclusions):
         # header, so disable it.
         '--no-cache-dir'
     ] + pip_wheel_args
-
     spawn(args)
-
     for exclusion in exclusions:
         matches = glob.glob(os.path.join(temp_dir, exclusion))
         for match in matches:
             os.remove(match)
-
     return temp_dir
 
 
@@ -145,7 +141,6 @@ def parse_args():
     parser.add_argument('-a', '--acl', metavar='POLICY', default='private',
                         help='Canned ACL policy to apply to uploaded objects')
     parser.add_argument('bucket')
-
     args, pip_wheel_args = parser.parse_known_args()
     try:
         run(args, pip_wheel_args)
@@ -156,17 +151,13 @@ def parse_args():
 
 def run(args, pip_wheel_args):
     bucket = Bucket(args.bucket)
-
     if not bucket.has_key('index.html'):
         bucket.put('<!DOCTYPE html><html></html>', 'index.html', acl=args.acl)
-
     index_url = bucket.generate_url('index.html')
-
     build_dir = build_wheels(index_url, pip_wheel_args, args.exclude)
     bucket.sync(build_dir, acl=args.acl)
     bucket.put(bucket.make_index(), key='index.html', acl=args.acl)
     shutil.rmtree(build_dir)
-
     print('mkwheelhouse: index written to', index_url)
 
 
