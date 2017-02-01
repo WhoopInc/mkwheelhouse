@@ -27,6 +27,22 @@ def spawn(args, capture_output=False):
     return subprocess.check_call(args)
 
 
+class UrlSafeS3Connection(object):
+    # Hack to work around Boto bug that generates invalid URLs when
+    # query_auth=False and an IAM role is in use.
+    # See: https://github.com/boto/boto/issues/2043
+    # See: https://github.com/WhoopInc/mkwheelhouse/issues/11
+    def __init__(self, s3_connection):
+        self.connection = s3_connection
+        self.security_token = s3_connection.provider.security_token
+
+    def __enter__(self):
+        self.connection.provider.security_token = ''
+
+    def __exit__(self, type, value, traceback):
+        self.connection.provider.security_token = self.security_token
+
+
 class Bucket(object):
     def __init__(self, url):
         if not re.match(r'^(s3:)?//', url):
@@ -41,11 +57,6 @@ class Bucket(object):
         self.s3 = boto.s3.connect_to_region(
             region_name=self.region,
             calling_format=boto.s3.connection.OrdinaryCallingFormat())
-        # Hack to work around Boto bug that generates invalid URLs when
-        # query_auth=False and an IAM role is in use.
-        # See: https://github.com/boto/boto/issues/2043
-        # See: https://github.com/WhoopInc/mkwheelhouse/issues/11
-        self.s3.provider.security_token = ''
         self.bucket = self.s3.get_bucket(self.name)
 
     def _get_region(self):
@@ -80,7 +91,8 @@ class Bucket(object):
 
     def generate_url(self, key):
         key = self.get_key(key)
-        return key.generate_url(expires_in=0, query_auth=False)
+        with UrlSafeS3Connection(self.s3):
+            return key.generate_url(expires_in=0, query_auth=False)
 
     def list(self):
         return self.bucket.list(prefix=self.prefix)
