@@ -160,8 +160,7 @@ def parse_args():
     try:
         run(args, pip_wheel_args)
     except subprocess.CalledProcessError:
-        print('mkwheelhouse: detected error in subprocess, aborting!',
-              file=sys.stderr)
+        sys.exit('mkwheelhouse: detected error in subprocess, aborting!')
 
 
 def run(args, pip_wheel_args):
